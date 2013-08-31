@@ -61,7 +61,7 @@
 				}
 			}
 		} else {
-			// This is a folder so add an expansion arrow char + folder name
+			// A Folder, add an arrow char and folder title
 			li.innerHTML = "&#x25be; " + title;
 		}
 		return ul.appendChild(li);
