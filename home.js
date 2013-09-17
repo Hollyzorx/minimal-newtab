@@ -2,7 +2,9 @@
 	var addBookmark, addBookmarks, gmailRe, setGmailCount, store, ul, updateGmailCount;
 	
 	ul = document.getElementById("bookmarks");
-
+	
+	css = document.styleSheets[0];
+	
 	store = window.localStorage;
 
 	gmailRe = new RegExp(/https:\/\/mail\.google\.com\/?(a\/.+\/)?/);
@@ -50,35 +52,81 @@
 	var currentParentId = 1;
 	var indent = 2;
 	var folderLevel = 0;
-	var bookmarkCount = 0;
+	var liCount = 1;
+	
+	addIcon = function(liCount, url){
+		faviconURL = "chrome://favicon/" + url;
+		css.insertRule(
+			"ul li:nth-child("+liCount+"):before { background: url("+faviconURL+") 100% 100% no-repeat; position: relative; top: 0.63em;} " 
+		);
+	}
 	
 	addBookmark = function(title, url){
-		li = document.createElement("li");
-		li.style.cssText = "padding-left: " + (indent * folderLevel) + "em;";
+		
+		//Get Favicon and set up li:before
+		addIcon(liCount, url);
 		
 		title = title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-		li.innerHTML = "<a href=\"" + (encodeURI(url)) + "\" id='bm_" + bookmarkCount + "'>" + title + "</a>";
+		li.innerHTML = "<a href=\"" + (encodeURI(url)) + "\" >" + title + "</a>";
+		
+		
+		//Are we dealing with a gmail link?
 		m = gmailRe.exec(url);
 		if (m) {
 			gmail = "https://mail.google.com/";
 			gmail += m[1] ? m[1] : "mail/";
 			gmail += "feed/atom";
 			if (url.match(/https:\/\/mail\.google\.com.*/)) {
-				updateGmailCount("bm_" + bookmarkCount, gmail);
+				li.className = "gmail_li_" + liCount;
+				updateGmailCount( "gmail_li_" + liCount , gmail);
 			}
 		}
+
 		ul.appendChild(li);
-		bookmarkCount++;
+		liCount++;
 	};
 	
 	addFolder = function(title){
-		li = document.createElement("li");
-		li.style.cssText = "padding-left: " + (indent * folderLevel) + "em;";
-		li.innerHTML = "&#x25be; " + title;
+		li.innerHTML = title;
 		ul.appendChild(li)
+		liCount++;
 	}
 	
 	processNode = function(node) {
+	
+		//Create <li> as we'll need it in the most common case
+		li = document.createElement("li");
+		li.style.cssText = "margin-left: " + (indent * folderLevel) + "em;";
+		
+		//Test if it's a bookmark / folder.. but not an empty folder
+		if( node.url || (node.children && node.children[0] != undefined) ) {
+			
+			if(node.url) {
+			
+				//If parentId changed then last folder was finished
+				if(node.parentId != currentParentId) {
+					console.log("change! " +node.parentId + currentParentId );
+					folderLevel--;
+					currentParentId = node.parentId;
+				}
+				addBookmark(node.title, node.url);
+				
+			}
+			else { 
+				//Must be a folder with stuff in..
+				addFolder(node.title);
+				
+				//Track folder depth using parentId
+				folderLevel++;
+				currentParentId = node.children[0].parentId;
+				
+				//Now process any child bookmarks
+				node.children.forEach( function(child) { processNode(child); });
+			}
+			
+		}
+		
+		/*
 		if(node.children){
 			if(node.children[0] === undefined ){
 				//Empty Folder, let's not break the system now~
@@ -87,6 +135,7 @@
 			else { //We have a full folder!
 			
 				addFolder(node.title);
+				liCount++;
 				
 				//Track folder depth using parentId
 				folderLevel++;
@@ -105,9 +154,11 @@
 				currentParentId = node.parentId;
 			}
 			addBookmark(node.title, node.url, node.parentId);
-		}
+			liCount++;
+		}*/
+		
 	};
-	
+
 	chrome.bookmarks.getTree( function(bookmarks) {
 		var bookmarksBar = bookmarks[0].children[0].children;
 		bookmarksBar.forEach( function(node){
