@@ -1,6 +1,6 @@
 html, body { 
 	margin: 0; padding: 0; 
-	font: 1.30em/1.8 'Oswald', sans-serif;
+	font: 1.15em/1.9 'Oswald', sans-serif;
 	background-color: #E9E9E9;
 }
 .wrapper {
@@ -9,6 +9,7 @@ html, body {
 ul {
 	list-style: none;
 	padding: 0 0.9em;
+	color: #cc0000;;
 }
 li:before {
 	content:"";

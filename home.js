@@ -1,13 +1,14 @@
 (function() {
-	var addBookmark, addBookmarks, gmailRe, setGmailCount, store, ul, updateGmailCount;
-	
-	ul = document.getElementById("bookmarks");
-	
-	css = document.styleSheets[0];
-	
-	store = window.localStorage;
-
-	gmailRe = new RegExp(/https:\/\/mail\.google\.com\/?(a\/.+\/)?/);
+	var currentFolderId = 1;
+	var indent = 2;
+	var folderLevel = 0;
+	var liCount = 0;
+	var gmail;
+	var gmailLiId;
+	var ul = document.getElementById("bookmarks");
+	var css = document.styleSheets[0];
+	var store = window.localStorage;
+	var gmailRe = new RegExp(/https:\/\/mail\.google\.com\/?(a\/.+\/)?/);
 
 	setGmailCount = function(id, count) {
 		var countTemplate, klass, link, span;
@@ -47,12 +48,6 @@
 		}
 	};
 	
-	//MY STUFF/////////////////////////
-	var currentParentId = 1;
-	var indent = 2;
-	var folderLevel = 0;
-	var liCount = 1;
-	var html = "";
 	
 	addIcon = function(faviconURL){
 		css.insertRule(
@@ -61,16 +56,17 @@
 	}
 	
 	addBookmark = function(title, url){
-		
+		li = document.createElement("li");
+		li.style.cssText = "margin-left: " + (indent * folderLevel) + "em;";		
 		//Get Favicon and set up li:before
 		addIcon("chrome://favicon/" + url);
 		
 		title = title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		li.innerHTML = "<a href=\"" + (encodeURI(url)) + "\" >" + title + "</a>";
-		li.id = "bookmark_li_" + liCount;
+		//li.id = "bookmark_li_" + liCount;
+		li.className = "folderId_" + currentFolderId;
 		
 		//Are we dealing with a gmail link?
-		isGmail = false;
 		m = gmailRe.exec(url);
 		if (m) {
 			gmail = "https://mail.google.com/";
@@ -78,84 +74,95 @@
 			gmail += "feed/atom";
 			if (url.match(/https:\/\/mail\.google\.com.*/)) {
 				li.id = "gmail_li_" + liCount;
-				isGmail = true;
+				gmailLiId = li.id;
 			}
 		}
-		//Add bookmark
+		
 		ul.appendChild(li);
-		
-		if(isGmail){
-			updateGmailCount( "gmail_li_" + liCount , gmail);
-		}
-		
-			liCount++;
 		
 	};
 	
 	addFolder = function(title){
-	
-		addIcon("arrow_right.png")
+		li = document.createElement("li");
+		li.style.cssText = "margin-left: " + (indent * folderLevel) + "em;";
+		url = chrome.extension.getURL("arrow_right.png");
+		addIcon( url )
 		li.innerHTML = title;
 		li.id = "folder_li_" + liCount;
-		ul.appendChild(li)
-		
-			liCount++;
+		li.className = "folderId_" + currentFolderId;
+		ul.appendChild(li);		
 	}
 	
 	processNode = function(node) {
 	
-		//Create <li> as we'll need it in the most common case
-		li = document.createElement("li");
-		li.style.cssText = "margin-left: " + (indent * folderLevel) + "em;";
-		
 		//Test if it's a bookmark / folder.. but not an empty folder
 		if( node.url || (node.children && node.children[0] != undefined) ) {
 			
+			liCount++;
 			if(node.url) {
 			
 				//If parentId changed then last folder was finished
-				if(node.parentId != currentParentId) {
-					console.log("change! " +node.parentId + currentParentId );
-					document
+				if(node.parentId != currentFolderId) {
 					folderLevel--;
-					currentParentId = node.parentId;
-					closeFolder = '</div>';
-					ul.innerHTML += closeFolder;
+					currentFolderId = node.parentId;
 				}
+				
 				addBookmark(node.title, node.url);
 				
 			}
 			else { 
+				//Track folder depth using parentId
+				currentFolderId = node.children[0].parentId;
+				
 				//Must be a folder with stuff in..
 				addFolder(node.title);
-				
-				//Track folder depth using parentId
 				folderLevel++;
-				currentParentId = node.children[0].parentId;
 				
-				//open div for folder after li at liCount (the folder)
-				openFolder = '<div class="folder">';
-				//openFolder = document.createTextNode('<div class="folder">');
-				//ul.innerHTML += openFolder;
-				ul.insertAdjacentHTML('beforeend', openFolder);
 				//Now process any child bookmarks
 				node.children.forEach( function(child) { processNode(child); });
 			}
 			
 		}
 	};
+	
+	toggleBookmarks = function(folder){
+		bookmarksInFolder = document.querySelectorAll('li[class^='+folder);
+		for (var i = 1; i < bookmarksInFolder.length ; i++) {
+			if(bookmarksInFolder[i].style.display != 'none'){
+				bookmarksInFolder[i].style.display = 'none';
+			}
+			else{
+				bookmarksInFolder[i].style.display = 'block';
+			}
+		}
+	};
 
 	chrome.bookmarks.getTree( function(bookmarks) {
 		var bookmarksBar = bookmarks[0].children[0].children;
 		bookmarksBar.forEach( function(node){
-			processNode(node);
+			processNode(node); //build page
 		});
-		console.log(bookmarksBar);
-	});
-	///////////////////////
+		
+		//update the last gmail link found
+		if(gmailLiId){
+			updateGmailCount(  gmailLiId , gmail);
+		}
+		
+		//Add click event handlers to all folders
+		var folders = document.querySelectorAll('li[id^="folder"');
+		for (var i = 0; i < folders.length ; i++) {
+			folders[i].addEventListener("click", 
+			function (event) {
+				event.preventDefault();
+				// Lets hide/unhide related bookmarks,
+				targetFolder = event.currentTarget.className;
+				toggleBookmarks(targetFolder);
+			}, 
+			false);
+			//Now lets hide contents as default:
+			toggleBookmarks(folders[i].className);
+		}
 	
-	chrome.bookmarks.getTree( function(bookmarks) {
-		//return addBookmarks(bookmarks[0].children[0].children);
 	});
 
 }).call(this);

@@ -16,5 +16,9 @@
     "https://mail.google.com/",
 	"chrome://favicon/"
   ],
+  "web_accessible_resources": [
+    "arrow_right.png",
+    "arrow_down.png"
+  ],
   "manifest_version": 2
 }
