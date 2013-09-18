@@ -1,4 +1,4 @@
-I hacked away at the open source Minimal New Tab extension, essentially it just lists your bookmarks bar and unread email count. Originally I had just planned to change the style a little to suit myself better but somewhere along the line I ended up fixing a bug with bookmarking gmail, adding favicons and a half-arsed folder expand/collapse feature.
+I hacked away at the open source Minimal New Tab extension, essentially it just lists your bookmarks bar and unread email count. I had just planned to change the style a little to suit myself better but somewhere along the line I ended up fixing a bug with bookmarking gmail, adding favicons and a half-arsed folder expand/collapse feature.
 
 I also like this extension because, unlike some new tab pages, your cursor goes straight to the search bar! Think it's worth mentioning.
 
@@ -8,7 +8,7 @@ If you have your Gmail bookmarked (including Google Apps mail on your own domain
 See the original extension here: https://chrome.google.com/webstore/detail/boplifegejanbmnjaghedjmnbgckneaf
 See the original source code here: https://github.com/dchest/minimal-newtab 
 See my ugly forked code: https://github.com/Hollyzorx/minimal-newtab
-See this extension in the chrome store: 
+See this extension in the chrome store: --- CBA to pay a fiver just yet..
 
 The Original License for Minimal New Tab
 -----------------------------------------
