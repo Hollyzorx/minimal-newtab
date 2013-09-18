@@ -9,7 +9,6 @@
 
 	gmailRe = new RegExp(/https:\/\/mail\.google\.com\/?(a\/.+\/)?/);
 
-	//BUG IS IN HERE ////
 	setGmailCount = function(id, count) {
 		var countTemplate, klass, link, span;
 		klass = count === "0" ? "zero" : "count";
@@ -52,7 +51,7 @@
 	var currentParentId = 1;
 	var indent = 2;
 	var folderLevel = 0;
-	var liCount = 1;
+	var liCount = 0;
 	
 	addIcon = function(faviconURL){
 		css.insertRule(
@@ -61,6 +60,8 @@
 	}
 	
 	addBookmark = function(title, url){
+		
+		liCount++;
 		
 		//Get Favicon and set up li:before
 		addIcon("chrome://favicon/" + url);
@@ -88,15 +89,15 @@
 			updateGmailCount( "gmail_li_" + liCount , gmail);
 		}
 		
-		liCount++;
 	};
 	
 	addFolder = function(title){
+	
+		liCount++;
 		addIcon("arrow_right.png")
 		li.innerHTML = title;
 		li.id = "folder_li_" + liCount;
 		ul.appendChild(li)
-		liCount++;
 	}
 	
 	processNode = function(node) {
@@ -113,6 +114,7 @@
 				//If parentId changed then last folder was finished
 				if(node.parentId != currentParentId) {
 					console.log("change! " +node.parentId + currentParentId );
+					document
 					folderLevel--;
 					currentParentId = node.parentId;
 				}
@@ -126,6 +128,10 @@
 				//Track folder depth using parentId
 				folderLevel++;
 				currentParentId = node.children[0].parentId;
+				
+				//open div for folder after li at liCount (the folder)
+				folderDiv = '<div class="folder">';
+				folderLi = document.getElementById("folder_li_" + liCount);
 				
 				//Now process any child bookmarks
 				node.children.forEach( function(child) { processNode(child); });
