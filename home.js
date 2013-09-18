@@ -51,24 +51,23 @@
 	var currentParentId = 1;
 	var indent = 2;
 	var folderLevel = 0;
-	var liCount = 0;
+	var liCount = 1;
+	var html = "";
 	
 	addIcon = function(faviconURL){
 		css.insertRule(
-			"ul li:nth-child("+liCount+"):before { background: url("+faviconURL+") 100% 100% no-repeat; position: relative; top: 0.63em;} " 
+			"ul li:nth-of-type("+liCount+"):before { background: url("+faviconURL+") 100% 100% no-repeat; position: relative; top: 0.63em;} " 
 		);
 	}
 	
 	addBookmark = function(title, url){
-		
-		liCount++;
 		
 		//Get Favicon and set up li:before
 		addIcon("chrome://favicon/" + url);
 		
 		title = title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		li.innerHTML = "<a href=\"" + (encodeURI(url)) + "\" >" + title + "</a>";
-		
+		li.id = "bookmark_li_" + liCount;
 		
 		//Are we dealing with a gmail link?
 		isGmail = false;
@@ -89,15 +88,18 @@
 			updateGmailCount( "gmail_li_" + liCount , gmail);
 		}
 		
+			liCount++;
+		
 	};
 	
 	addFolder = function(title){
 	
-		liCount++;
 		addIcon("arrow_right.png")
 		li.innerHTML = title;
 		li.id = "folder_li_" + liCount;
 		ul.appendChild(li)
+		
+			liCount++;
 	}
 	
 	processNode = function(node) {
@@ -117,6 +119,8 @@
 					document
 					folderLevel--;
 					currentParentId = node.parentId;
+					closeFolder = '</div>';
+					ul.innerHTML += closeFolder;
 				}
 				addBookmark(node.title, node.url);
 				
@@ -130,46 +134,15 @@
 				currentParentId = node.children[0].parentId;
 				
 				//open div for folder after li at liCount (the folder)
-				folderDiv = '<div class="folder">';
-				folderLi = document.getElementById("folder_li_" + liCount);
-				
+				openFolder = '<div class="folder">';
+				//openFolder = document.createTextNode('<div class="folder">');
+				//ul.innerHTML += openFolder;
+				ul.insertAdjacentHTML('beforeend', openFolder);
 				//Now process any child bookmarks
 				node.children.forEach( function(child) { processNode(child); });
 			}
 			
 		}
-		
-		/*
-		if(node.children){
-			if(node.children[0] === undefined ){
-				//Empty Folder, let's not break the system now~
-				console.log("Empty folder");
-			}
-			else { //We have a full folder!
-			
-				addFolder(node.title);
-				liCount++;
-				
-				//Track folder depth using parentId
-				folderLevel++;
-				currentParentId = node.children[0].parentId;
-				
-				//Now process any child bookmarks
-				node.children.forEach( function(child) { processNode(child); });
-			}
-		}
-		if(node.url) { //We have a bookmark!
-			
-			//If parentId changed then last folder was finished
-			if(node.parentId != currentParentId) {
-				console.log("change! " +node.parentId + currentParentId );
-				folderLevel--;
-				currentParentId = node.parentId;
-			}
-			addBookmark(node.title, node.url, node.parentId);
-			liCount++;
-		}*/
-		
 	};
 
 	chrome.bookmarks.getTree( function(bookmarks) {

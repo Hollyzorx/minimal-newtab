@@ -8,9 +8,8 @@ html, body {
 }
 ul {
 	list-style: none;
-	padding: 0 0.9em 
+	padding: 0 0.9em;
 }
-
 li:before {
 	content:"";
 	width: 16px;
@@ -34,4 +33,7 @@ a:hover {
 }
 .zero {
 	color: #ddd;
+}
+.folder {
+	background-color: red;
 }
