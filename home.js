@@ -27,7 +27,7 @@
 		var lastCount, xhr;
 		lastCount = store.getItem(id + "_count");
 		if (lastCount !== null) {
-			//setGmailCount(id, lastCount);
+			setGmailCount(id, lastCount);
 			console.log("HIT");
 		}
 		if ((new Date()).getTime() - store.getItem(id + "_time") > 60000) {
@@ -54,8 +54,7 @@
 	var folderLevel = 0;
 	var liCount = 1;
 	
-	addIcon = function(liCount, url){
-		faviconURL = "chrome://favicon/" + url;
+	addIcon = function(faviconURL){
 		css.insertRule(
 			"ul li:nth-child("+liCount+"):before { background: url("+faviconURL+") 100% 100% no-repeat; position: relative; top: 0.63em;} " 
 		);
@@ -64,30 +63,38 @@
 	addBookmark = function(title, url){
 		
 		//Get Favicon and set up li:before
-		addIcon(liCount, url);
+		addIcon("chrome://favicon/" + url);
 		
 		title = title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		li.innerHTML = "<a href=\"" + (encodeURI(url)) + "\" >" + title + "</a>";
 		
 		
 		//Are we dealing with a gmail link?
+		isGmail = false;
 		m = gmailRe.exec(url);
 		if (m) {
 			gmail = "https://mail.google.com/";
 			gmail += m[1] ? m[1] : "mail/";
 			gmail += "feed/atom";
 			if (url.match(/https:\/\/mail\.google\.com.*/)) {
-				li.className = "gmail_li_" + liCount;
-				updateGmailCount( "gmail_li_" + liCount , gmail);
+				li.id = "gmail_li_" + liCount;
+				isGmail = true;
 			}
 		}
-
+		//Add bookmark
 		ul.appendChild(li);
+		
+		if(isGmail){
+			updateGmailCount( "gmail_li_" + liCount , gmail);
+		}
+		
 		liCount++;
 	};
 	
 	addFolder = function(title){
+		addIcon("arrow_right.png")
 		li.innerHTML = title;
+		li.id = "folder_li_" + liCount;
 		ul.appendChild(li)
 		liCount++;
 	}
